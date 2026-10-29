@@ -4,10 +4,10 @@
  */
 
 #include <random>
+#include <filesystem>
 #include <iostream>
-#include <iomanip>
-#include <map>
 #include "vis.h"
+#include "seg.h"
 
 static Mat generate_syn_image() {
     Mat image = Mat::zeros(1000,1000,CV_8UC3);
@@ -51,32 +51,22 @@ static pair<vector<vector<int>>, vector<vector<int>>> generate_groups_and_famili
 
 
 int main() {
-    auto pr = generate_syn_polylines();
-    auto vertices = pr.first;
-    auto lines = pr.second;
-    auto gf = generate_groups_and_families();
-    auto groups = gf.first;
-    auto families = gf.second;
-    auto v = vis();
-    v.set_image(generate_syn_image());
-    cout << "image in class" << endl;
-    v.visualize();
-    v.set_vertices(&vertices);
-    v.visualize();
-    v.set_polylines(&lines);
-    v.visualize();
-    v.set_groups(&groups);
-    v.visualize();
-    v.set_families(&families);
-    cout << "full class" << endl;
-    v.visualize();
+    Mat image;
+    filesystem::path dir = "assets/Fluo/02/";
+    constexpr char ow[] = "Original Images";
+    constexpr char nw[] = "New Images";
+    for (auto const& dir_entry : filesystem::directory_iterator(dir)) {
+        imread(dir_entry.path().string(), image, IMREAD_GRAYSCALE);
+        auto original = image.clone();
 
-    cout << "static image" << endl;
-    vis::visualize(generate_syn_image());
-    cout << "static polyline" << endl;
-    vis::visualize(generate_syn_image(), vertices, lines);
-    cout << "static families" << endl;
-    vis::visualize(generate_syn_image(), vertices, lines, groups, families);
-
+        seg::apply_blur(image);
+        seg::apply_threshold(image);
+        seg::apply_morph(image);
+        imshow(ow, original);
+        imshow(nw, image);
+        moveWindow("Original Images", 0, 0);
+        moveWindow("New Images", 1200, 0);
+        waitKey(20);
+    }
     return 0;
 }
