@@ -51,22 +51,33 @@ static pair<vector<vector<int>>, vector<vector<int>>> generate_groups_and_famili
 
 
 int main() {
-    Mat image;
-    filesystem::path dir = "assets/Fluo/02/";
+    std::filesystem::path dir = "assets/GOWT-Training/01/";
     constexpr char ow[] = "Original Images";
     constexpr char nw[] = "New Images";
+    vector<string> image_paths;
+    vector<Mat> images;
     for (auto const& dir_entry : filesystem::directory_iterator(dir)) {
-        imread(dir_entry.path().string(), image, IMREAD_GRAYSCALE);
+        image_paths.push_back(dir_entry.path().string());
+    }
+    sort(image_paths.begin(), image_paths.end());
+    for (auto const& image_path : image_paths) {
+        Mat image;
+        cout << image_path << endl;
+        imread(image_path, image, IMREAD_GRAYSCALE);
+        images.push_back(image);
         auto original = image.clone();
+        Mat sure_bg, sure_fg, tbd;
 
         seg::apply_blur(image);
         seg::apply_threshold(image);
         seg::apply_morph(image);
+        seg::prepare_segmentation(image, sure_bg, sure_fg, tbd);
+        seg::segment(image, sure_bg, sure_fg, tbd);
         imshow(ow, original);
         imshow(nw, image);
         moveWindow("Original Images", 0, 0);
-        moveWindow("New Images", 1200, 0);
-        waitKey(20);
+        moveWindow("New Images", 600, 0);
+        waitKey(100);
     }
     return 0;
 }
